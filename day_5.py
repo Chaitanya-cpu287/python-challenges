@@ -1,3 +1,9 @@
+# Disaster Resource Dispatch System
+# Name: chaitanya
+# L value: 9
+# PLI value: 0
+# Applied Rule: Rule A (Remove Low Demand)
+
 n=int(input("enter no.of resource requests : "))
 
 l=[0]*n
@@ -63,6 +69,7 @@ print("Low Demand : ",low_demand)
 print("Moderate Demand : ",moderate_demand)
 print("High Demand : ",high_demand)
 print("Invalid Requests : ",invalid_requests)
+
 
 
 
