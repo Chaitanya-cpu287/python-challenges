@@ -1,0 +1,128 @@
+import random
+import math
+import copy
+import numpy as np
+import pandas as pd
+
+roll_no = 549
+divisor = roll_no % 3
+if divisor == 0:
+    divisor = 3
+
+def generate_students(n):
+    students = []
+
+    for i in range(1, n + 1):
+        student = {
+            "id": i,
+            "marks": random.randint(40, 95),
+            "attendance": random.randint(60, 100),
+            "scores": [
+                random.randint(10, 25),
+                random.randint(10, 25)
+            ]
+        }
+
+        students.append(student)
+
+    return students
+
+def convert_dataframe(data):
+    return pd.DataFrame(data)
+
+def mutate_data(data):
+    for i in range(len(data)):
+        if i % divisor == 0:
+            old_marks = data[i]["marks"]
+            new_marks = old_marks + math.sqrt(old_marks)
+            data[i]["marks"] = round(new_marks, 2)
+            data[i]["attendance"] += 5
+            data[i]["scores"][0] += 2
+            data[i]["scores"][1] += 3
+    return data
+
+def analyze_data(original, modified):
+
+    original_marks = np.array([x["marks"] for x in original])
+    modified_marks = np.array([x["marks"] for x in modified])
+    mean_val = np.mean(modified_marks)
+    median_val = np.median(modified_marks)
+    std_val = np.std(modified_marks)
+    drift = abs(np.mean(original_marks) - np.mean(modified_marks))
+    total = 0
+    
+    for x in modified_marks:
+        total += x
+
+    manual_mean = total / len(modified_marks)
+
+    normalized = (modified_marks - np.min(modified_marks)) / (
+        np.max(modified_marks) - np.min(modified_marks)
+    )
+    return mean_val, median_val, std_val, drift, manual_mean, normalized
+
+def classify_system(drift, std_val, copy_failure):
+
+    if copy_failure:
+        return "Copy Failure Detected"
+    elif drift > 7:
+        return "Critical Drift"
+    elif drift > 3:
+        return "Minor Drift"
+    elif std_val < 10:
+        return "Stable Data"
+    else:
+        return "Stable Data"
+
+n = random.randint(10, 15)
+students = generate_students(n)
+original_backup = copy.deepcopy(students)
+shallow_copy = copy.copy(students)
+deep_copy = copy.deepcopy(students)
+
+mutate_data(shallow_copy)
+mutate_data(deep_copy)
+
+df_original = convert_dataframe(students)
+df_shallow = convert_dataframe(shallow_copy)
+df_deep = convert_dataframe(deep_copy)
+
+copy_failure = False
+
+for i in range(len(students)):
+    if students[i] != original_backup[i]:
+        copy_failure = True
+        break
+
+mean_val, median_val, std_val, drift, manual_mean, normalized = analyze_data(
+    original_backup, deep_copy
+)
+
+result_tuple = (
+    round(float(mean_val), 2),
+    round(float(drift), 2),
+    round(float(std_val), 2)
+)
+
+id_set = set([x["id"] for x in students])
+status = classify_system(float(drift), float(std_val), copy_failure)
+
+print("ORIGINAL DATAFRAME")
+print(df_original)
+print("\nSHALLOW COPY RESULT")
+print(df_shallow)
+print("\nDEEP COPY RESULT")
+print(df_deep)
+print("\nMean =", round(float(mean_val), 2))
+print("Median =", round(float(median_val), 2))
+print("Standard Deviation =", round(float(std_val), 2))
+print("Manual Mean =", round(float(manual_mean), 2))
+print("\nNormalized Marks:")
+print(normalized)
+print("\nDrift Value =", round(float(drift), 2))
+print("\nTuple Output:")
+print(result_tuple)
+print("\nUnique IDs:")
+print(id_set)
+print("\nFinal Classification:")
+print(status)
